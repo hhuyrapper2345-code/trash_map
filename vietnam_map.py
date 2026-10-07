@@ -46,11 +46,11 @@ def build_vietnam_routing_map(output_filename="index.html"):
         prefer_canvas=True
     )
 
-    # Thêm CDN Leaflet.Rotate & Viewport Meta tag cho Mobile
+    # Thêm CDN Leaflet Rotate Plugin hỗ trợ cảm ứng 2 ngón và Ctrl + Chuột
     head_html = '''
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate.css" />
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.css" />
     '''
     m.get_root().header.add_child(folium.Element(head_html))
 
@@ -102,7 +102,7 @@ def build_vietnam_routing_map(output_filename="index.html"):
     # 6. Quản lý Lớp bản đồ
     folium.LayerControl(position='topright', collapsed=True).add_to(m)
 
-    # --- 7. TÙY CHỈNH UI RESPONSIVE (PC / TABLET / MOBILE) ---
+    # --- 7. TÙY CHỈNH UI RESPONSIVE VÀ TÍNH NĂNG XOAY 360 ĐỘ ---
     gradient_ui_html = '''
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -162,12 +162,11 @@ def build_vietnam_routing_map(output_filename="index.html"):
     </div>
 
     <!-- NÚT RESET HƯỚNG BẢN ĐỒ VỀ BẮC -->
-    <button id="reset-bearing-btn" title="Đặt lại hướng Bắc" onclick="resetMapBearing()">
+    <button id="reset-bearing-btn" title="Đặt lại hướng Bắc (0°)" onclick="resetMapBearing()">
         <i class="fa-solid fa-compass" id="compass-icon"></i>
     </button>
 
     <style>
-        /* === CHUNG & TỐI ƯU CẢM ỨNG MOBILE === */
         body, html {
             margin: 0;
             padding: 0;
@@ -175,6 +174,7 @@ def build_vietnam_routing_map(output_filename="index.html"):
             height: 100%;
             overflow: hidden;
             -webkit-tap-highlight-color: transparent;
+            touch-action: none; /* Tối ưu cảm ứng xoay 2 ngón trên mobile */
         }
 
         /* Nút Zoom & GPS Glassmorphism */
@@ -241,7 +241,11 @@ def build_vietnam_routing_map(output_filename="index.html"):
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
+            transition: border-color 0.3s ease;
+        }
+
+        #compass-icon {
+            transition: transform 0.1s linear;
         }
 
         /* Đồng Hồ */
@@ -440,9 +444,8 @@ def build_vietnam_routing_map(output_filename="index.html"):
             color: #ffffff;
         }
 
-        /* === MEDIA QUERIES RESPONSIVE DÀNH CHO MOBILE (iOS/Android) === */
+        /* MEDIA QUERIES MOBILE */
         @media (max-width: 768px) {
-            /* 1. Thu nhỏ khung tìm kiếm chính */
             #search-bar-container {
                 top: 12px;
                 width: calc(100% - 80px);
@@ -451,7 +454,6 @@ def build_vietnam_routing_map(output_filename="index.html"):
                 padding: 4px 12px;
             }
 
-            /* 2. Đưa nút La bàn sang kế bên ô tìm kiếm */
             #reset-bearing-btn {
                 top: 12px;
                 right: 12px;
@@ -460,12 +462,8 @@ def build_vietnam_routing_map(output_filename="index.html"):
                 font-size: 16px;
             }
 
-            /* 3. Ẩn đồng hồ để chừa không gian hiển thị bản đồ trên điện thoại */
-            #glass-clock-container {
-                display: none;
-            }
+            #glass-clock-container { display: none; }
 
-            /* 4. Tối ưu Panel Dẫn Đường thành dạng Drawer vuốt dưới lên */
             #routing-panel {
                 bottom: 12px;
                 left: 12px;
@@ -477,21 +475,11 @@ def build_vietnam_routing_map(output_filename="index.html"):
 
             .toggle-icon { display: block; }
 
-            /* Trạng thái thu gọn trên mobile */
-            #routing-panel.panel-collapsed .panel-body {
-                display: none;
-            }
+            #routing-panel.panel-collapsed .panel-body { display: none; }
 
-            /* Di chuyển vị trí nút Zoom / GPS mặc định của Folium */
-            .leaflet-top.leaflet-left {
-                top: 65px !important;
-            }
+            .leaflet-top.leaflet-left { top: 65px !important; }
+            .leaflet-control-layers { margin-top: 65px !important; }
 
-            .leaflet-control-layers {
-                margin-top: 65px !important;
-            }
-
-            /* Tối ưu MiniMap nhỏ lại trên mobile */
             .leaflet-control-minimap {
                 width: 80px !important;
                 height: 80px !important;
@@ -514,7 +502,7 @@ def build_vietnam_routing_map(output_filename="index.html"):
             var hours = String(now.getHours()).padStart(2, '0');
             var minutes = String(now.getMinutes()).padStart(2, '0');
             var seconds = String(now.getSeconds()).padStart(2, '0');
-            document.getElementById('clock-time').innerText = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('clock-time').innerText = `${hours}:${seconds}:${seconds}`;
 
             var days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
             var dayName = days[now.getDay()];
@@ -524,7 +512,7 @@ def build_vietnam_routing_map(output_filename="index.html"):
             document.getElementById('clock-date').innerText = `${dayName}, ${date}/${month}/${year}`;
         }
 
-        /* ẨN / HIỆN PANEL DẪN ĐƯỜNG TRÊN MOBILE */
+        /* TOGGLE PANEL MOBILE */
         function toggleRoutingPanel() {
             if (window.innerWidth <= 768) {
                 var panel = document.getElementById('routing-panel');
@@ -539,10 +527,13 @@ def build_vietnam_routing_map(output_filename="index.html"):
             }
         }
 
-        /* XOAY BẢN ĐỒ */
-        function enableMapRotation(map) {
+        /* THIẾT LẬP TÍNH NĂNG XOAY BẢN ĐỒ 360 ĐỘ (PC: Ctrl+Chuột trái / Mobile: 2 ngón tay) */
+        function setupMapRotation(map) {
             if (typeof L.Rotate !== 'undefined') {
+                // Bật tùy chọn xoay đa nền tảng
                 map.setBearing(0);
+
+                // Cập nhật góc quay của kim La Bàn khi bản đồ xoay
                 map.on('rotate', function() {
                     var bearing = map.getBearing();
                     var compass = document.getElementById('compass-icon');
@@ -550,9 +541,42 @@ def build_vietnam_routing_map(output_filename="index.html"):
                         compass.style.transform = `rotate(${-bearing}deg)`;
                     }
                 });
+
+                // Xử lý xoay bằng chuột trên PC/Laptop: Nhấn giữ Ctrl + Kéo chuột trái
+                var isRotatingPC = false;
+                var startX = 0;
+                var startBearing = 0;
+
+                var mapContainer = map.getContainer();
+
+                mapContainer.addEventListener('mousedown', function(e) {
+                    if (e.ctrlKey && e.button === 0) { // Giữ phím Ctrl và nhấn Chuột trái
+                        isRotatingPC = true;
+                        startX = e.clientX;
+                        startBearing = map.getBearing() || 0;
+                        mapContainer.style.cursor = 'grabbing';
+                        e.preventDefault();
+                    }
+                });
+
+                window.addEventListener('mousemove', function(e) {
+                    if (isRotatingPC) {
+                        var deltaX = e.clientX - startX;
+                        var newBearing = startBearing + (deltaX * 0.5); // Tốc độ xoay
+                        map.setBearing(newBearing);
+                    }
+                });
+
+                window.addEventListener('mouseup', function(e) {
+                    if (isRotatingPC) {
+                        isRotatingPC = false;
+                        mapContainer.style.cursor = '';
+                    }
+                });
             }
         }
 
+        /* RESET HƯỚNG BẮC CHUẨN (0 ĐỘ) */
         function resetMapBearing() {
             if (mapObj && typeof mapObj.setBearing === 'function') {
                 mapObj.setBearing(0);
@@ -571,7 +595,7 @@ def build_vietnam_routing_map(output_filename="index.html"):
             }
 
             if (mapObj) {
-                enableMapRotation(mapObj);
+                setupMapRotation(mapObj);
                 mapObj.invalidateSize();
 
                 mapObj.on('click', function(e) {
@@ -595,7 +619,7 @@ def build_vietnam_routing_map(output_filename="index.html"):
             });
         });
 
-        /* TÌM KIẾM ĐỊA ĐIỂM CHÍNH */
+        /* TÌM KIẾM BẢN ĐỒ */
         function debounceGlobalSearch() {
             clearTimeout(globalSearchTimer);
             var query = document.getElementById('global-search-input').value;
@@ -763,7 +787,7 @@ def build_vietnam_routing_map(output_filename="index.html"):
 
     # Lưu file index.html
     m.save(output_filename)
-    print(f"[OK] Đã xuất file thành công: {output_filename}")
+    print(f"[OK] Đã hoàn tất cài đặt xoay 360 độ: {output_filename}")
     webbrowser.open('file://' + os.path.realpath(output_filename))
 
 
