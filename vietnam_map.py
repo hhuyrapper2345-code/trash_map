@@ -7,7 +7,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bản đồ 2D Xoay Đa Nền Tảng - Tối Ưu Giao Diện</title>
+    <title>Bản đồ 2D - Self-Adaptive Responsive Layout</title>
     
     <!-- Leaflet 2D Core -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -45,10 +45,10 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             background-color: #1a1a2e;
         }
 
-        /* TỐI ƯU CÁC NÚT ĐIỀU KHIỂN BẢN ĐỒ */
+        /* 1. TỐI ƯU CÁC NÚT ĐIỀU KHIỂN BẢN ĐỒ LEAFLET */
         .leaflet-top.leaflet-left {
-            top: 75px; /* Đẩy lớp chọn bản đồ xuống dưới thanh tìm kiếm */
-            left: 12px;
+            top: 75px;
+            left: 14px;
         }
 
         .leaflet-bar, .leaflet-control-zoom, .leaflet-control-layers {
@@ -65,9 +65,9 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             border: var(--border-glass) !important;
             color: var(--accent-color) !important;
             font-weight: bold !important;
-            width: 38px !important;
-            height: 38px !important;
-            line-height: 38px !important;
+            width: 40px !important;
+            height: 40px !important;
+            line-height: 40px !important;
         }
 
         .leaflet-control-layers {
@@ -88,7 +88,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             gap: 8px;
         }
 
-        /* KHUNG TÌM KIẾM ĐỊA ĐIỂM GLOBAL */
+        /* 2. KHUNG TÌM KIẾM ĐỊA ĐIỂM GLOBAL */
         #search-bar-container {
             position: absolute;
             top: 16px;
@@ -137,7 +137,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             box-shadow: var(--shadow-glass);
         }
 
-        /* NÚT TÁI ĐẶT HƯỚNG BẮC (LA BÀN) */
+        /* 3. NÚT LA BÀN RESET HƯỚNG BẮC */
         #reset-bearing-btn {
             position: absolute;
             top: 16px;
@@ -161,10 +161,10 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
 
         #compass-icon { transition: transform 0.1s linear; }
 
-        /* PANEL DẪN ĐƯỜNG & ĐỒNG HỒ */
+        /* 4. PANEL DẪN ĐƯỜNG (PC DEFAULT) */
         #routing-panel {
             position: absolute;
-            bottom: 20px;
+            bottom: 25px;
             left: 20px;
             z-index: 1000;
             background: var(--bg-glass);
@@ -173,8 +173,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             padding: 16px;
             border-radius: 20px;
             box-shadow: var(--shadow-glass);
-            width: 320px;
-            max-width: calc(100vw - 40px);
+            width: 310px;
             color: #ffffff;
             border: var(--border-glass);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -251,11 +250,11 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             border-radius: 10px; font-size: 12px; text-align: center; color: #ffffff;
         }
 
-        /* ĐỒNG HỒ GLASS DESIGN */
+        /* 5. ĐỒNG HỒ GLASS DESIGN (PC DEFAULT) */
         #glass-clock-container {
             position: absolute;
-            bottom: 20px;
-            left: 360px;
+            bottom: 25px;
+            left: 360px; /* Giãn cách đẹp mắt trên PC */
             z-index: 1000;
             display: flex;
             align-items: center;
@@ -270,6 +269,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             color: #ffffff;
             height: 48px;
             box-sizing: border-box;
+            transition: all 0.3s ease;
         }
         .clock-icon {
             font-size: 20px;
@@ -280,17 +280,19 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
         #clock-time { font-size: 16px; font-weight: 700; }
         #clock-date { font-size: 11px; color: #a0a0b5; margin-top: 1px; }
 
-        /* TỐI ƯU CẤU TRÚC ĐA MÀN HÌNH (RESPONSIVE MEDIA QUERIES) */
-        
-        /* 1. Màn hình Laptop / PC cỡ nhỏ (Width: 769px - 1024px) */
-        @media (max-width: 1024px) {
+        /* ==========================================================================
+           TỰ ĐỘNG ĐIỀU CHỈNH RESPONSIVE THÔNG MINH THEO MÀN HÌNH (PC / LAPTOP / MOBILE)
+           ========================================================================== */
+
+        /* LAPTOP CỠ TRUNG & SMALL DESKTOP (769px -> 1024px) */
+        @media (max-width: 1024px) and (min-width: 769px) {
             #glass-clock-container {
                 left: auto;
-                right: 20px; /* Đẩy đồng hồ sang góc phải trên PC nhỏ/Laptop */
+                right: 20px; /* Chuyển đồng hồ sang góc phải dưới trên Laptop để không bị chật */
             }
         }
 
-        /* 2. Màn hình Mobile & Tablet (Width <= 768px) */
+        /* MOBILE & TABLET CỠ NHỎ (<= 768px) */
         @media (max-width: 768px) {
             #search-bar-container {
                 top: 12px;
@@ -310,14 +312,14 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
                 left: 12px;
             }
 
-            /* Ẩn đồng hồ trên mobile để tối ưu không gian hiển thị bản đồ */
+            /* Trên Mobile: Tự động ẩn khung đồng hồ lớn để nhường không gian cho bản đồ */
             #glass-clock-container {
                 display: none;
             }
 
-            /* Panel Dẫn đường thu gọn thông minh trên Mobile */
+            /* Panel Dẫn đường tự động co giãn full bề ngang phía dưới màn hình Mobile */
             #routing-panel {
-                bottom: 16px;
+                bottom: 12px;
                 left: 12px;
                 right: 12px;
                 width: auto;
@@ -327,6 +329,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
 
             .toggle-icon { display: block; }
 
+            /* Trạng thái thu gọn trên Mobile */
             #routing-panel.panel-collapsed .panel-body {
                 display: none;
             }
@@ -687,7 +690,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
     with open(output_filename, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    print(f"[OK] Đã xuất thành công bản đồ tối ưu đa màn hình: {output_filename}")
+    print(f"[OK] Đã tạo thành công giao diện tự động tương thích PC/Laptop/Mobile: {output_filename}")
     webbrowser.open('file://' + os.path.realpath(output_filename))
 
 if __name__ == "__main__":
