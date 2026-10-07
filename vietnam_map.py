@@ -254,7 +254,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
         #glass-clock-container {
             position: absolute;
             bottom: 25px;
-            left: 360px; /* Giãn cách đẹp mắt trên PC */
+            left: 360px;
             z-index: 1000;
             display: flex;
             align-items: center;
@@ -280,19 +280,14 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
         #clock-time { font-size: 16px; font-weight: 700; }
         #clock-date { font-size: 11px; color: #a0a0b5; margin-top: 1px; }
 
-        /* ==========================================================================
-           TỰ ĐỘNG ĐIỀU CHỈNH RESPONSIVE THÔNG MINH THEO MÀN HÌNH (PC / LAPTOP / MOBILE)
-           ========================================================================== */
-
-        /* LAPTOP CỠ TRUNG & SMALL DESKTOP (769px -> 1024px) */
+        /* RESPONSIVE MEDIA QUERIES */
         @media (max-width: 1024px) and (min-width: 769px) {
             #glass-clock-container {
                 left: auto;
-                right: 20px; /* Chuyển đồng hồ sang góc phải dưới trên Laptop để không bị chật */
+                right: 20px;
             }
         }
 
-        /* MOBILE & TABLET CỠ NHỎ (<= 768px) */
         @media (max-width: 768px) {
             #search-bar-container {
                 top: 12px;
@@ -312,12 +307,10 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
                 left: 12px;
             }
 
-            /* Trên Mobile: Tự động ẩn khung đồng hồ lớn để nhường không gian cho bản đồ */
             #glass-clock-container {
                 display: none;
             }
 
-            /* Panel Dẫn đường tự động co giãn full bề ngang phía dưới màn hình Mobile */
             #routing-panel {
                 bottom: 12px;
                 left: 12px;
@@ -329,7 +322,6 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
 
             .toggle-icon { display: block; }
 
-            /* Trạng thái thu gọn trên Mobile */
             #routing-panel.panel-collapsed .panel-body {
                 display: none;
             }
@@ -403,7 +395,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
     </div>
 
     <script>
-        // 1. ĐỊNH NGHĨA CÁC LỚP BẢN ĐỒ
+        // 1. ĐỊNH NGHĨA CÁC LỚP BẢN ĐỒ (ĐÃ LỌC BỎ OPENSTREETMAP VÀ DARK MODE)
         var googleRoadmap = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
             maxZoom: 20, attribution: 'Google Maps'
         });
@@ -414,14 +406,6 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
 
         var googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
             maxZoom: 20, attribution: 'Google Hybrid'
-        });
-
-        var osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19, attribution: 'OpenStreetMap'
-        });
-
-        var cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 20, attribution: 'CartoDB Dark'
         });
 
         var esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -443,8 +427,6 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             "🗺️ Google Đường Bộ": googleRoadmap,
             "🛰️ Google Vệ Tinh": googleSatellite,
             "🌐 Google Hybrid": googleHybrid,
-            "🌙 Dark Mode": cartoDark,
-            "🌍 OpenStreetMap": osmStandard,
             "📡 Esri Satellite": esriSat
         };
 
@@ -690,7 +672,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
     with open(output_filename, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    print(f"[OK] Đã tạo thành công giao diện tự động tương thích PC/Laptop/Mobile: {output_filename}")
+    print(f"[OK] Đã cập nhật thành công bản đồ (Đã bỏ OpenStreetMap và Dark Map): {output_filename}")
     webbrowser.open('file://' + os.path.realpath(output_filename))
 
 if __name__ == "__main__":
