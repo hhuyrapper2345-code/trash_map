@@ -6,14 +6,14 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bản đồ 2D Xoay Đa Nền Tảng - Thay Đổi Loại Bản Đồ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Bản đồ 2D Xoay Đa Nền Tảng - Tối Ưu Giao Diện</title>
     
     <!-- Leaflet 2D Core -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- Leaflet Rotate Plugin (Hỗ trợ xoay 2D cho PC & Mobile) -->
+    <!-- Leaflet Rotate Plugin -->
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.css" />
 
@@ -21,15 +21,22 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        :root {
+            --bg-glass: linear-gradient(135deg, rgba(30, 30, 47, 0.90) 0%, rgba(42, 42, 64, 0.90) 100%);
+            --border-glass: 1px solid rgba(255, 255, 255, 0.18);
+            --shadow-glass: 0 8px 25px rgba(0, 0, 0, 0.45);
+            --accent-color: #00d2ff;
+        }
+
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
-            touch-action: none;
+            touch-action: manipulation;
         }
 
         #map {
@@ -38,66 +45,70 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             background-color: #1a1a2e;
         }
 
-        /* TỐI ƯU GIAO DIỆN GLASSMORPHISM 2D & BỘ CHỌN LỚP BẢN ĐỒ */
+        /* TỐI ƯU CÁC NÚT ĐIỀU KHIỂN BẢN ĐỒ */
+        .leaflet-top.leaflet-left {
+            top: 75px; /* Đẩy lớp chọn bản đồ xuống dưới thanh tìm kiếm */
+            left: 12px;
+        }
+
         .leaflet-bar, .leaflet-control-zoom, .leaflet-control-layers {
             border: none !important;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4) !important;
-            border-radius: 12px !important;
+            box-shadow: var(--shadow-glass) !important;
+            border-radius: 14px !important;
             overflow: hidden;
         }
 
         .leaflet-bar a {
-            background: linear-gradient(135deg, rgba(30, 30, 47, 0.88) 0%, rgba(42, 42, 64, 0.88) 100%) !important;
+            background: var(--bg-glass) !important;
             backdrop-filter: blur(12px) !important;
             -webkit-backdrop-filter: blur(12px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.18) !important;
-            color: #00d2ff !important;
+            border: var(--border-glass) !important;
+            color: var(--accent-color) !important;
             font-weight: bold !important;
+            width: 38px !important;
+            height: 38px !important;
+            line-height: 38px !important;
         }
 
         .leaflet-control-layers {
-            background: linear-gradient(135deg, rgba(30, 30, 47, 0.92) 0%, rgba(42, 42, 64, 0.92) 100%) !important;
+            background: var(--bg-glass) !important;
             backdrop-filter: blur(14px) !important;
             -webkit-backdrop-filter: blur(14px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            border: var(--border-glass) !important;
             color: #ffffff !important;
-            padding: 8px 12px !important;
+            padding: 10px 14px !important;
             font-size: 13px !important;
         }
 
-        .leaflet-control-layers-expanded {
-            border-radius: 16px !important;
-        }
-
         .leaflet-control-layers-base label {
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
 
-        /* KHUNG TÌM KIẾM ĐỊA ĐIỂM */
+        /* KHUNG TÌM KIẾM ĐỊA ĐIỂM GLOBAL */
         #search-bar-container {
             position: absolute;
-            top: 20px;
+            top: 16px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            width: 420px;
-            max-width: 85vw;
+            width: 450px;
+            max-width: calc(100vw - 110px);
             display: flex;
             align-items: center;
-            background: linear-gradient(135deg, rgba(30, 30, 47, 0.88) 0%, rgba(42, 42, 64, 0.88) 100%);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: var(--bg-glass);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: var(--border-glass);
             border-radius: 30px;
-            padding: 6px 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            padding: 4px 16px;
+            box-shadow: var(--shadow-glass);
         }
 
-        .search-icon { color: #00d2ff; font-size: 16px; margin-right: 10px; }
+        .search-icon { color: var(--accent-color); font-size: 16px; margin-right: 10px; }
 
         #global-search-input {
             width: 100%;
@@ -106,41 +117,43 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             outline: none;
             color: #ffffff;
             font-size: 14px;
-            padding: 8px 0;
+            padding: 10px 0;
         }
 
-        #clear-search-btn { background: transparent; border: none; color: #a0a0b5; cursor: pointer; }
+        #clear-search-btn { background: transparent; border: none; color: #a0a0b5; cursor: pointer; padding: 6px; }
 
         .global-autocomplete-box {
             position: absolute;
-            top: 100%; left: 0; right: 0;
+            top: calc(100% + 8px); left: 0; right: 0;
             background: rgba(30, 30, 47, 0.95);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: var(--border-glass);
             border-radius: 16px;
             max-height: 250px;
             overflow-y: auto;
             z-index: 1050;
-            margin-top: 8px;
             display: none;
+            box-shadow: var(--shadow-glass);
         }
 
         /* NÚT TÁI ĐẶT HƯỚNG BẮC (LA BÀN) */
         #reset-bearing-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 16px;
+            right: 16px;
             z-index: 1000;
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            background: linear-gradient(135deg, rgba(30, 30, 47, 0.88) 0%, rgba(42, 42, 64, 0.88) 100%);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #00d2ff;
+            background: var(--bg-glass);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: var(--border-glass);
+            color: var(--accent-color);
             font-size: 18px;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            box-shadow: var(--shadow-glass);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -148,21 +161,23 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
 
         #compass-icon { transition: transform 0.1s linear; }
 
-        /* PANEL DẪN ĐƯỜNG */
+        /* PANEL DẪN ĐƯỜNG & ĐỒNG HỒ */
         #routing-panel {
             position: absolute;
-            bottom: 25px;
+            bottom: 20px;
             left: 20px;
             z-index: 1000;
-            background: linear-gradient(135deg, rgba(30, 30, 47, 0.88) 0%, rgba(42, 42, 64, 0.88) 100%);
+            background: var(--bg-glass);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             padding: 16px;
-            border-radius: 18px;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-            width: 300px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-glass);
+            width: 320px;
+            max-width: calc(100vw - 40px);
             color: #ffffff;
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            transition: all 0.3s ease;
+            border: var(--border-glass);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .panel-header { display: flex; align-items: center; gap: 10px; cursor: pointer; }
@@ -183,10 +198,10 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
 
         .input-group input {
             width: 100%;
-            padding: 9px 12px 9px 36px;
+            padding: 11px 12px 11px 36px;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 10px;
+            border-radius: 12px;
             color: #ffffff;
             font-size: 13px;
             outline: none;
@@ -195,20 +210,20 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
 
         .autocomplete-box {
             position: absolute;
-            bottom: 100%; left: 0; right: 0;
+            bottom: calc(100% + 6px); left: 0; right: 0;
             background: rgba(37, 37, 56, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 10px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: var(--border-glass);
+            border-radius: 12px;
             max-height: 160px;
             overflow-y: auto;
             z-index: 1050;
-            margin-bottom: 6px;
             display: none;
         }
 
         .autocomplete-item {
-            padding: 10px 12px;
+            padding: 12px;
             font-size: 12px;
             color: #e0e0e0;
             cursor: pointer;
@@ -218,12 +233,14 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             text-overflow: ellipsis;
         }
 
-        .button-group { display: flex; gap: 8px; margin-top: 12px; }
+        .button-group { display: flex; gap: 10px; margin-top: 14px; }
         .button-group button {
-            flex: 1; padding: 9px; border: none; border-radius: 10px;
-            font-size: 12px; font-weight: 600; cursor: pointer;
+            flex: 1; padding: 11px; border: none; border-radius: 12px;
+            font-size: 13px; font-weight: 600; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: opacity 0.2s;
         }
+        .button-group button:active { opacity: 0.8; }
         #route-btn { background: linear-gradient(135deg, #11998e, #38ef7d); color: #fff; }
         #clear-btn { background: linear-gradient(135deg, #ff416c, #ff4b2b); color: #fff; }
 
@@ -234,40 +251,89 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             border-radius: 10px; font-size: 12px; text-align: center; color: #ffffff;
         }
 
-        /* ĐỒNG HỒ GLASS DESIGN - ĐÃ ĐƯỢC ĐIỀU CHỈNH HOÀN HẢO KHOẢNG CÁCH GIÃN CÁCH */
+        /* ĐỒNG HỒ GLASS DESIGN */
         #glass-clock-container {
             position: absolute;
-            bottom: 25px;
-            left: 380px; /* Đã thay đổi từ 345px -> 380px để tạo khoảng cách đẹp mắt */
+            bottom: 20px;
+            left: 360px;
             z-index: 1000;
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 10px 18px;
-            background: linear-gradient(135deg, rgba(30, 30, 47, 0.88) 0%, rgba(42, 42, 64, 0.88) 100%);
+            background: var(--bg-glass);
             backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            -webkit-backdrop-filter: blur(14px);
+            border: var(--border-glass);
             border-radius: 18px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+            box-shadow: var(--shadow-glass);
             color: #ffffff;
+            height: 48px;
+            box-sizing: border-box;
         }
         .clock-icon {
-            font-size: 22px;
+            font-size: 20px;
             background: linear-gradient(45deg, #00d2ff, #3a7bd5);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        #clock-time { font-size: 18px; font-weight: 700; }
-        #clock-date { font-size: 11px; color: #a0a0b5; margin-top: 2px; }
+        #clock-time { font-size: 16px; font-weight: 700; }
+        #clock-date { font-size: 11px; color: #a0a0b5; margin-top: 1px; }
 
-        /* RESPONSIVE MOBILE */
+        /* TỐI ƯU CẤU TRÚC ĐA MÀN HÌNH (RESPONSIVE MEDIA QUERIES) */
+        
+        /* 1. Màn hình Laptop / PC cỡ nhỏ (Width: 769px - 1024px) */
+        @media (max-width: 1024px) {
+            #glass-clock-container {
+                left: auto;
+                right: 20px; /* Đẩy đồng hồ sang góc phải trên PC nhỏ/Laptop */
+            }
+        }
+
+        /* 2. Màn hình Mobile & Tablet (Width <= 768px) */
         @media (max-width: 768px) {
-            #search-bar-container { top: 12px; left: 15px; transform: none; width: calc(100% - 80px); }
-            #reset-bearing-btn { top: 12px; right: 12px; }
-            #glass-clock-container { display: none; }
-            #routing-panel { bottom: 12px; left: 12px; right: 12px; width: auto; }
+            #search-bar-container {
+                top: 12px;
+                left: 12px;
+                transform: none;
+                width: calc(100vw - 80px);
+                max-width: none;
+            }
+
+            #reset-bearing-btn {
+                top: 12px;
+                right: 12px;
+            }
+
+            .leaflet-top.leaflet-left {
+                top: 68px;
+                left: 12px;
+            }
+
+            /* Ẩn đồng hồ trên mobile để tối ưu không gian hiển thị bản đồ */
+            #glass-clock-container {
+                display: none;
+            }
+
+            /* Panel Dẫn đường thu gọn thông minh trên Mobile */
+            #routing-panel {
+                bottom: 16px;
+                left: 12px;
+                right: 12px;
+                width: auto;
+                max-width: none;
+                border-radius: 18px;
+            }
+
             .toggle-icon { display: block; }
-            #routing-panel.panel-collapsed .panel-body { display: none; }
+
+            #routing-panel.panel-collapsed .panel-body {
+                display: none;
+            }
+
+            #routing-panel.panel-collapsed {
+                padding: 12px 16px;
+            }
         }
     </style>
 </head>
@@ -334,7 +400,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
     </div>
 
     <script>
-        // 1. ĐỊNH NGHĨA CÁC LỚP BẢN ĐỒ (BASE LAYERS)
+        // 1. ĐỊNH NGHĨA CÁC LỚP BẢN ĐỒ
         var googleRoadmap = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
             maxZoom: 20, attribution: 'Google Maps'
         });
@@ -359,17 +425,17 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             maxZoom: 19, attribution: 'Esri Satellite'
         });
 
-        // 2. KHỞI TẠO BẢN ĐỒ LEAFLET 2D VỚI TÍNH NĂNG XOAY
+        // 2. KHỞI TẠO BẢN ĐỒ LEAFLET 2D VỚI XOAY 360 DEGREES
         var map = L.map('map', {
             center: [16.047079, 108.206230],
             zoom: 6,
-            layers: [googleRoadmap], // Lớp mặc định ban đầu
-            rotate: true,            // Kích hoạt tính năng xoay
-            touchRotate: true,       // Xoay 2 ngón tay trên Mobile
+            layers: [googleRoadmap],
+            rotate: true,
+            touchRotate: true,
             rotateControl: false
         });
 
-        // 3. THÊM BỘ CHỌN LOẠI BẢN ĐỒ (LAYER CONTROL)
+        // 3. THÊM BỘ CHỌN LỚP BẢN ĐỒ
         var baseMaps = {
             "🗺️ Google Đường Bộ": googleRoadmap,
             "🛰️ Google Vệ Tinh": googleSatellite,
@@ -381,7 +447,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
 
         L.control.layers(baseMaps, null, { position: 'topleft' }).addTo(map);
 
-        // 4. CẤU HÌNH XOAY CONTINUOUS (PC: Ctrl + Mouse Drag, Mobile: Touch)
+        // 4. XỬ LÝ XOAY BẢN ĐỒ (PC + MOBILE)
         map.setBearing(0);
 
         map.on('rotate', function() {
@@ -606,7 +672,6 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
             document.getElementById('route-info').style.display = 'none';
         }
 
-        // Chọn điểm trực tiếp bằng cách Click chuột trái trên bản đồ
         map.on('click', function(e) {
             if (!startMarker) {
                 setStartPoint(e.latlng.lat, e.latlng.lng, "Điểm chọn trên bản đồ");
@@ -622,7 +687,7 @@ def build_2d_rotate_map_with_layers(output_filename="index.html"):
     with open(output_filename, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    print(f"[OK] Đã xuất thành công bản đồ 2D có khoảng cách giãn cách chuẩn: {output_filename}")
+    print(f"[OK] Đã xuất thành công bản đồ tối ưu đa màn hình: {output_filename}")
     webbrowser.open('file://' + os.path.realpath(output_filename))
 
 if __name__ == "__main__":
