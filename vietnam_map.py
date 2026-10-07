@@ -1,18 +1,22 @@
 import os
 import webbrowser
 
-def build_3d_routing_map(output_filename="index.html"):
+def build_2d_rotate_map_with_layers(output_filename="index.html"):
     html_content = '''<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bản đồ 3D Đa Nền Tảng</title>
+    <title>Bản đồ 2D Xoay Đa Nền Tảng - Thay Đổi Loại Bản Đồ</title>
     
-    <!-- MapLibre GL JS (Engine 3D WebGL) -->
-    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
-    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-    
+    <!-- Leaflet 2D Core -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Leaflet Rotate Plugin (Hỗ trợ xoay 2D cho PC & Mobile) -->
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.css" />
+
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -25,6 +29,7 @@ def build_3d_routing_map(output_filename="index.html"):
             overflow: hidden;
             font-family: 'Segoe UI', Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
+            touch-action: none;
         }
 
         #map {
@@ -33,13 +38,52 @@ def build_3d_routing_map(output_filename="index.html"):
             background-color: #1a1a2e;
         }
 
+        /* TỐI ƯU GIAO DIỆN GLASSMORPHISM 2D & BỘ CHỌN LỚP BẢN ĐỒ */
+        .leaflet-bar, .leaflet-control-zoom, .leaflet-control-layers {
+            border: none !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4) !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+        }
+
+        .leaflet-bar a {
+            background: linear-gradient(135deg, rgba(30, 30, 47, 0.88) 0%, rgba(42, 42, 64, 0.88) 100%) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            color: #00d2ff !important;
+            font-weight: bold !important;
+        }
+
+        .leaflet-control-layers {
+            background: linear-gradient(135deg, rgba(30, 30, 47, 0.92) 0%, rgba(42, 42, 64, 0.92) 100%) !important;
+            backdrop-filter: blur(14px) !important;
+            -webkit-backdrop-filter: blur(14px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            color: #ffffff !important;
+            padding: 8px 12px !important;
+            font-size: 13px !important;
+        }
+
+        .leaflet-control-layers-expanded {
+            border-radius: 16px !important;
+        }
+
+        .leaflet-control-layers-base label {
+            margin-bottom: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
         /* KHUNG TÌM KIẾM ĐỊA ĐIỂM */
         #search-bar-container {
             position: absolute;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 10;
+            z-index: 1000;
             width: 420px;
             max-width: 85vw;
             display: flex;
@@ -76,23 +120,17 @@ def build_3d_routing_map(output_filename="index.html"):
             border-radius: 16px;
             max-height: 250px;
             overflow-y: auto;
-            z-index: 20;
+            z-index: 1050;
             margin-top: 8px;
             display: none;
         }
 
-        /* NÚT ĐIỀU KHIỂN HƯỚNG BẮC & TILT 3D */
-        #controls-container {
+        /* NÚT TÁI ĐẶT HƯỚNG BẮC (LA BÀN) */
+        #reset-bearing-btn {
             position: absolute;
             top: 20px;
             right: 20px;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .custom-btn {
+            z-index: 1000;
             width: 42px;
             height: 42px;
             border-radius: 50%;
@@ -100,14 +138,12 @@ def build_3d_routing_map(output_filename="index.html"):
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #00d2ff;
-            font-size: 16px;
-            font-weight: bold;
+            font-size: 18px;
             cursor: pointer;
             box-shadow: 0 8px 20px rgba(0,0,0,0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
         }
 
         #compass-icon { transition: transform 0.1s linear; }
@@ -117,7 +153,7 @@ def build_3d_routing_map(output_filename="index.html"):
             position: absolute;
             bottom: 25px;
             left: 20px;
-            z-index: 10;
+            z-index: 1000;
             background: linear-gradient(135deg, rgba(30, 30, 47, 0.88) 0%, rgba(42, 42, 64, 0.88) 100%);
             padding: 16px;
             border-radius: 18px;
@@ -166,7 +202,7 @@ def build_3d_routing_map(output_filename="index.html"):
             border-radius: 10px;
             max-height: 160px;
             overflow-y: auto;
-            z-index: 20;
+            z-index: 1050;
             margin-bottom: 6px;
             display: none;
         }
@@ -198,12 +234,12 @@ def build_3d_routing_map(output_filename="index.html"):
             border-radius: 10px; font-size: 12px; text-align: center; color: #ffffff;
         }
 
-        /* ĐỒNG HỒ THỜI GIAN THỰC */
+        /* ĐỒNG HỒ GLASS DESIGN - ĐÃ ĐƯỢC ĐIỀU CHỈNH HOÀN HẢO KHOẢNG CÁCH GIÃN CÁCH */
         #glass-clock-container {
             position: absolute;
             bottom: 25px;
-            left: 345px;
-            z-index: 10;
+            left: 380px; /* Đã thay đổi từ 345px -> 380px để tạo khoảng cách đẹp mắt */
+            z-index: 1000;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -227,7 +263,7 @@ def build_3d_routing_map(output_filename="index.html"):
         /* RESPONSIVE MOBILE */
         @media (max-width: 768px) {
             #search-bar-container { top: 12px; left: 15px; transform: none; width: calc(100% - 80px); }
-            #controls-container { top: 12px; right: 12px; }
+            #reset-bearing-btn { top: 12px; right: 12px; }
             #glass-clock-container { display: none; }
             #routing-panel { bottom: 12px; left: 12px; right: 12px; width: auto; }
             .toggle-icon { display: block; }
@@ -249,21 +285,16 @@ def build_3d_routing_map(output_filename="index.html"):
         <div id="global-search-results" class="global-autocomplete-box"></div>
     </div>
 
-    <!-- BỘ NÚT ĐIỀU KHIỂN BẢN ĐỒ 3D -->
-    <div id="controls-container">
-        <button class="custom-btn" title="Đặt lại hướng Bắc (0°)" onclick="resetMapBearing()">
-            <i class="fa-solid fa-compass" id="compass-icon"></i>
-        </button>
-        <button class="custom-btn" title="Bật/Tắt chế độ nghiêng 3D" onclick="toggle3DTilt()">
-            3D
-        </button>
-    </div>
+    <!-- NÚT RESET HƯỚNG BẮC -->
+    <button id="reset-bearing-btn" title="Đặt lại hướng Bắc (0°)" onclick="resetMapBearing()">
+        <i class="fa-solid fa-compass" id="compass-icon"></i>
+    </button>
 
     <!-- PANEL DẪN ĐƯỜNG -->
     <div id="routing-panel" class="panel-collapsed">
         <div class="panel-header" onclick="toggleRoutingPanel()">
             <i class="fa-solid fa-route"></i>
-            <h3>Dẫn Đường 3D</h3>
+            <h3>Dẫn Đường 2D</h3>
             <i class="fa-solid fa-chevron-up toggle-icon" id="panel-toggle-btn"></i>
         </div>
         
@@ -303,42 +334,56 @@ def build_3d_routing_map(output_filename="index.html"):
     </div>
 
     <script>
-        // CẤU HÌNH KHOẢNG BẢN ĐỒ 3D
-        var map = new maplibregl.Map({
-            container: 'map',
-            style: {
-                'version': 8,
-                'sources': {
-                    'raster-tiles': {
-                        'type': 'raster',
-                        'tiles': ['https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'],
-                        'tileSize': 256,
-                        'maxzoom': 20
-                    }
-                },
-                'layers': [{
-                    'id': 'google-tiles',
-                    'type': 'raster',
-                    'source': 'raster-tiles',
-                    'minzoom': 0,
-                    'maxzoom': 20
-                }]
-            },
-            center: [108.206230, 16.047079], // [Lng, Lat]
-            zoom: 6,
-            pitch: 60, // Độ nghiêng 3D khởi tạo
-            bearing: 0, // Góc xoay ban đầu
-            antialias: true
+        // 1. ĐỊNH NGHĨA CÁC LỚP BẢN ĐỒ (BASE LAYERS)
+        var googleRoadmap = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20, attribution: 'Google Maps'
         });
 
-        // Thêm bộ điều khiển điều hướng chuẩn MapLibre
-        map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-left');
-        map.addControl(new maplibregl.GeolocateControl({
-            positionOptions: { enableHighAccuracy: true },
-            trackUserLocation: true
-        }), 'top-left');
+        var googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 20, attribution: 'Google Vệ Tinh'
+        });
 
-        // Cập nhật góc kim la bàn khi bản đồ xoay
+        var googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            maxZoom: 20, attribution: 'Google Hybrid'
+        });
+
+        var osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19, attribution: 'OpenStreetMap'
+        });
+
+        var cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20, attribution: 'CartoDB Dark'
+        });
+
+        var esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19, attribution: 'Esri Satellite'
+        });
+
+        // 2. KHỞI TẠO BẢN ĐỒ LEAFLET 2D VỚI TÍNH NĂNG XOAY
+        var map = L.map('map', {
+            center: [16.047079, 108.206230],
+            zoom: 6,
+            layers: [googleRoadmap], // Lớp mặc định ban đầu
+            rotate: true,            // Kích hoạt tính năng xoay
+            touchRotate: true,       // Xoay 2 ngón tay trên Mobile
+            rotateControl: false
+        });
+
+        // 3. THÊM BỘ CHỌN LOẠI BẢN ĐỒ (LAYER CONTROL)
+        var baseMaps = {
+            "🗺️ Google Đường Bộ": googleRoadmap,
+            "🛰️ Google Vệ Tinh": googleSatellite,
+            "🌐 Google Hybrid": googleHybrid,
+            "🌙 Dark Mode": cartoDark,
+            "🌍 OpenStreetMap": osmStandard,
+            "📡 Esri Satellite": esriSat
+        };
+
+        L.control.layers(baseMaps, null, { position: 'topleft' }).addTo(map);
+
+        // 4. CẤU HÌNH XOAY CONTINUOUS (PC: Ctrl + Mouse Drag, Mobile: Touch)
+        map.setBearing(0);
+
         map.on('rotate', function() {
             var bearing = map.getBearing();
             var compass = document.getElementById('compass-icon');
@@ -347,14 +392,40 @@ def build_3d_routing_map(output_filename="index.html"):
             }
         });
 
-        function resetMapBearing() {
-            map.easeTo({ bearing: 0, pitch: 0, duration: 1000 });
-        }
+        var isRotating = false;
+        var startX = 0;
+        var startBearing = 0;
+        var container = map.getContainer();
 
-        function toggle3DTilt() {
-            var currentPitch = map.getPitch();
-            var newPitch = currentPitch > 10 ? 0 : 60;
-            map.easeTo({ pitch: newPitch, duration: 800 });
+        container.addEventListener('mousedown', function(e) {
+            if (e.ctrlKey || e.button === 2) {
+                isRotating = true;
+                startX = e.clientX;
+                startBearing = map.getBearing() || 0;
+                container.style.cursor = 'grabbing';
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('mousemove', function(e) {
+            if (isRotating) {
+                var deltaX = e.clientX - startX;
+                var newBearing = startBearing + (deltaX * 0.6);
+                map.setBearing(newBearing);
+            }
+        });
+
+        window.addEventListener('mouseup', function() {
+            if (isRotating) {
+                isRotating = false;
+                container.style.cursor = '';
+            }
+        });
+
+        container.addEventListener('contextmenu', e => e.preventDefault());
+
+        function resetMapBearing() {
+            map.setBearing(0);
         }
 
         /* ĐỒNG HỒ THỜI GIAN THỰC */
@@ -391,8 +462,7 @@ def build_3d_routing_map(output_filename="index.html"):
         }
 
         /* DẪN ĐƯỜNG VÀ TÌM KIẾM ĐỊA ĐIỂM */
-        var startMarker = null, endMarker = null, searchMarker = null;
-        var startCoords = null, endCoords = null;
+        var startMarker = null, endMarker = null, searchMarker = null, routePolyline = null;
         var globalSearchTimer = null, searchTimer = null;
 
         function debounceGlobalSearch() {
@@ -422,7 +492,7 @@ def build_3d_routing_map(output_filename="index.html"):
                                 div.className = 'autocomplete-item';
                                 div.innerText = item.display_name;
                                 div.onclick = function() {
-                                    goToLocation(parseFloat(item.lon), parseFloat(item.lat), item.display_name);
+                                    goToLocation(parseFloat(item.lat), parseFloat(item.lon), item.display_name);
                                     box.style.display = 'none';
                                 };
                                 box.appendChild(div);
@@ -432,20 +502,18 @@ def build_3d_routing_map(output_filename="index.html"):
             }, 300);
         }
 
-        function goToLocation(lng, lat, label) {
-            if (searchMarker) searchMarker.remove();
-            searchMarker = new maplibregl.Marker({ color: '#00d2ff' })
-                .setLngLat([lng, lat])
-                .setPopup(new maplibregl.Popup().setHTML(`<b>${label}</b>`))
-                .addTo(map);
-            map.flyTo({ center: [lng, lat], zoom: 15, pitch: 50, duration: 1500 });
+        function goToLocation(lat, lng, label) {
+            if (searchMarker) map.removeLayer(searchMarker);
+            searchMarker = L.marker([lat, lng]).addTo(map)
+                .bindPopup("<b>" + label + "</b>").openPopup();
+            map.setView([lat, lng], 15);
         }
 
         function clearGlobalSearch() {
             document.getElementById('global-search-input').value = '';
             document.getElementById('clear-search-btn').style.display = 'none';
             document.getElementById('global-search-results').style.display = 'none';
-            if (searchMarker) searchMarker.remove();
+            if (searchMarker) map.removeLayer(searchMarker);
         }
 
         function debounceSearch(type) {
@@ -469,9 +537,9 @@ def build_3d_routing_map(output_filename="index.html"):
                                 div.innerText = item.display_name;
                                 div.onclick = function() {
                                     if (type === 'start') {
-                                        setStartPoint(parseFloat(item.lon), parseFloat(item.lat), item.display_name);
+                                        setStartPoint(parseFloat(item.lat), parseFloat(item.lon), item.display_name);
                                     } else {
-                                        setEndPoint(parseFloat(item.lon), parseFloat(item.lat), item.display_name);
+                                        setEndPoint(parseFloat(item.lat), parseFloat(item.lon), item.display_name);
                                     }
                                     box.style.display = 'none';
                                 };
@@ -482,34 +550,29 @@ def build_3d_routing_map(output_filename="index.html"):
             }, 300);
         }
 
-        function setStartPoint(lng, lat, label) {
-            if (startMarker) startMarker.remove();
-            startCoords = [lng, lat];
-            startMarker = new maplibregl.Marker({ color: '#00e676' })
-                .setLngLat([lng, lat])
-                .addTo(map);
+        function setStartPoint(lat, lng, label) {
+            if (startMarker) map.removeLayer(startMarker);
+            startMarker = L.marker([lat, lng]).addTo(map).bindPopup("<b>Điểm đón (A)</b><br>" + label).openPopup();
             document.getElementById('start-input').value = label;
         }
 
-        function setEndPoint(lng, lat, label) {
-            if (endMarker) endMarker.remove();
-            endCoords = [lng, lat];
-            endMarker = new maplibregl.Marker({ color: '#ff5252' })
-                .setLngLat([lng, lat])
-                .addTo(map);
+        function setEndPoint(lat, lng, label) {
+            if (endMarker) map.removeLayer(endMarker);
+            endMarker = L.marker([lat, lng]).addTo(map).bindPopup("<b>Điểm đến (B)</b><br>" + label).openPopup();
             document.getElementById('end-input').value = label;
         }
 
-        // TÍNH TOÁN ĐƯỜNG ĐI DẪN ĐƯỜNG 3D
         function calculateRoute() {
             var infoCard = document.getElementById('route-info');
-            if (!startCoords || !endCoords) {
+            if (!startMarker || !endMarker) {
                 infoCard.style.display = 'block';
                 infoCard.innerHTML = "<span style='color: #ff5252;'>Vui lòng chọn đủ Điểm đón & Điểm đến!</span>";
                 return;
             }
 
-            var osrmUrl = `https://router.project-osrm.org/route/v1/driving/${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}?overview=full&geometries=geojson`;
+            var latLngA = startMarker.getLatLng();
+            var latLngB = endMarker.getLatLng();
+            var osrmUrl = `https://router.project-osrm.org/route/v1/driving/${latLngA.lng},${latLngA.lat};${latLngB.lng},${latLngB.lat}?overview=full&geometries=geojson`;
 
             infoCard.style.display = 'block';
             infoCard.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Đang tính toán đường đi...";
@@ -519,23 +582,11 @@ def build_3d_routing_map(output_filename="index.html"):
                 .then(data => {
                     if (data.routes && data.routes.length > 0) {
                         var route = data.routes[0];
-                        var routeGeojson = {
-                            'type': 'Feature',
-                            'geometry': route.geometry
-                        };
+                        var coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
 
-                        if (map.getSource('route')) {
-                            map.getSource('route').setData(routeGeojson);
-                        } else {
-                            map.addSource('route', { 'type': 'geojson', 'data': routeGeojson });
-                            map.addLayer({
-                                'id': 'route',
-                                'type': 'line',
-                                'source': 'route',
-                                'layout': { 'line-join': 'round', 'line-cap': 'round' },
-                                'paint': { 'line-color': '#00d2ff', 'line-width': 6, 'line-opacity': 0.85 }
-                            });
-                        }
+                        if (routePolyline) map.removeLayer(routePolyline);
+                        routePolyline = L.polyline(coords, {color: '#00d2ff', weight: 6, opacity: 0.9}).addTo(map);
+                        map.fitBounds(routePolyline.getBounds(), {padding: [40, 40]});
 
                         var distKm = (route.distance / 1000).toFixed(2);
                         infoCard.innerHTML = `<i class="fa-solid fa-road"></i> Khoảng cách: <b>${distKm} km</b>`;
@@ -546,23 +597,21 @@ def build_3d_routing_map(output_filename="index.html"):
         }
 
         function clearRoute() {
-            if (startMarker) startMarker.remove();
-            if (endMarker) endMarker.remove();
-            if (map.getLayer('route')) map.removeLayer('route');
-            if (map.getSource('route')) map.removeSource('route');
-            startCoords = null; endCoords = null;
+            if (startMarker) map.removeLayer(startMarker);
+            if (endMarker) map.removeLayer(endMarker);
+            if (routePolyline) map.removeLayer(routePolyline);
+            startMarker = null; endMarker = null; routePolyline = null;
             document.getElementById('start-input').value = '';
             document.getElementById('end-input').value = '';
             document.getElementById('route-info').style.display = 'none';
         }
 
-        // Chọn điểm trực tiếp bằng cách Click vào bản đồ
+        // Chọn điểm trực tiếp bằng cách Click chuột trái trên bản đồ
         map.on('click', function(e) {
-            var coords = [e.lngLat.lng, e.lngLat.lat];
-            if (!startCoords) {
-                setStartPoint(coords[0], coords[1], "Điểm chọn trên bản đồ");
-            } else if (!endCoords) {
-                setEndPoint(coords[0], coords[1], "Điểm chọn trên bản đồ");
+            if (!startMarker) {
+                setStartPoint(e.latlng.lat, e.latlng.lng, "Điểm chọn trên bản đồ");
+            } else if (!endMarker) {
+                setEndPoint(e.latlng.lat, e.latlng.lng, "Điểm chọn trên bản đồ");
                 calculateRoute();
             }
         });
@@ -573,8 +622,8 @@ def build_3d_routing_map(output_filename="index.html"):
     with open(output_filename, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    print(f"[OK] Đã xuất thành công bản đồ 3D: {output_filename}")
+    print(f"[OK] Đã xuất thành công bản đồ 2D có khoảng cách giãn cách chuẩn: {output_filename}")
     webbrowser.open('file://' + os.path.realpath(output_filename))
 
 if __name__ == "__main__":
-    build_3d_routing_map()
+    build_2d_rotate_map_with_layers()
